@@ -1,9 +1,10 @@
 {
   "name": "@yippiecloud/cdk-stack-static",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "bin": {
     "cdk-stack-static": "bin/deploy.js"
   },
+  "main": "lib/cdk-stack-static.js",
   "scripts": {
     "build": "tsc",
     "watch": "tsc -w",
