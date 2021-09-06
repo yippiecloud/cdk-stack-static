@@ -1,0 +1,31 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+
+jobs:
+  AWS:
+    runs-on: ubuntu-latest
+    steps:
+      - name: GitHub Checkout
+        uses: actions/checkout@v2
+
+      - name: Setup
+        uses: actions/setup-node@v2
+        with:
+          node-version: '14'
+          registry-url: https://registry.npmjs.org/
+          scope: '@octocat'
+      - name: Install
+        run: npm install
+
+      - name: Build
+        run: npm run build
+
+      - name: Publish
+        uses: JS-DevTools/npm-publish@v1
+        with:
+          token: ${{ secrets.NODE_AUTH_TOKEN }}
+          check-version: true
+          access: public
