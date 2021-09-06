@@ -2,11 +2,12 @@
 import { App } from '@aws-cdk/core';
 import { CdkStackStatic } from '../lib/cdk-stack-static';
 
-const domainName = process.env.DOMAINNAME || '';
-const certificateArn = process.env.AWS_CERTIFICATEARN || '';
-const hostedZoneId = process.env.AWS_HOSTEDZONEID;
-const awsRegion = process.env.AWS_REGION;
-const awsAccount = process.env.AWS_ACCOUNT;
+const namespace = process.env.CDK_NAMESPACE!;
+const domainName = process.env.CDK_DOMAINNAME!;
+const certificateArn = process.env.CDK_CERTIFICATEARN!;
+const hostedZoneId = process.env.CDK_HOSTEDZONEID!;
+const awsRegion = process.env.CDK_AWSREGION!;
+const awsAccount = process.env.CDK_AWSACCOUNT!;
 
 const app = new App({
   context: {
