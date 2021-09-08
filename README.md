@@ -1,1 +1,1 @@
-# AWS-CDK Website & SPA Stack
+# AWS-CDK website & SPA stack
