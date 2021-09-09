@@ -6,10 +6,10 @@ test('Empty Stack', () => {
   const app = new App();
   // WHEN
   const stack = new CdkStackStatic(app, 'MyTestStack', {
-    projectId: 'ABC',
-    sourceBucketName: 'yippiecloud-artifacts',
-    zipObjectKey: 'mike.bild@gmail.com/website-1630843779966.zip',
-    domainName: 'yippie.cloud',
+    id: 'ABC',
+    bucketName: '',
+    zipFileName: '',
+    domainName: '',
     certificateArn: '',
   });
   // THEN

@@ -8,9 +8,9 @@ import { ARecord, RecordTarget, HostedZone } from '@aws-cdk/aws-route53';
 import { Certificate } from '@aws-cdk/aws-certificatemanager';
 
 interface CdkStackStaticProps extends StackProps {
-  projectId: string;
-  zipObjectKey: string;
-  sourceBucketName: string;
+  id: string;
+  zipFileName: string;
+  bucketName: string;
   domainName: string;
   certificateArn: string;
 }
@@ -18,11 +18,11 @@ interface CdkStackStaticProps extends StackProps {
 export class CdkStackStatic extends Stack {
   constructor(scope: Construct, id: string, props: CdkStackStaticProps) {
     super(scope, id, props);
-    const { projectId, sourceBucketName, zipObjectKey, domainName, certificateArn } = props;
+    const { id: deployId, bucketName, zipFileName, domainName, certificateArn } = props;
 
-    const sourceBucket = Bucket.fromBucketName(this, 'SourceBucketName', sourceBucketName);
+    const sourceBucket = Bucket.fromBucketName(this, 'BucketName', bucketName);
     const destinationBucket = new Bucket(this, 'DestinationBucket', {
-      bucketName: `${projectId}-preview.${domainName}`,
+      bucketName: `${deployId}-preview.${domainName}`,
       removalPolicy: RemovalPolicy.DESTROY,
       websiteIndexDocument: 'index.html',
       websiteErrorDocument: 'index.html',
@@ -61,7 +61,7 @@ export class CdkStackStatic extends Stack {
       ],
       aliasConfiguration: {
         acmCertRef: certificate.certificateArn,
-        names: [`${projectId}.${domainName}`],
+        names: [`${deployId}.${domainName}`],
       },
       errorConfigurations: [
         {
@@ -78,19 +78,19 @@ export class CdkStackStatic extends Stack {
 
     new ARecord(this, `CloudFrontAliasRecord`, {
       zone,
-      recordName: `${projectId}.${domainName}`,
+      recordName: `${deployId}.${domainName}`,
       target: RecordTarget.fromAlias(new CloudFrontTarget(distribution)),
     });
 
     new ARecord(this, `WebsiteAliasRecord`, {
       zone,
-      recordName: `${projectId}-preview.${domainName}`,
+      recordName: `${deployId}-preview.${domainName}`,
       target: RecordTarget.fromAlias(new BucketWebsiteTarget(destinationBucket)),
     });
 
     new BucketDeployment(this, 'StaticContentDeployment', {
       destinationBucket: destinationBucket,
-      sources: [Source.bucket(sourceBucket, zipObjectKey)],
+      sources: [Source.bucket(sourceBucket, zipFileName)],
       retainOnDelete: false,
 
       prune: true,
@@ -99,21 +99,21 @@ export class CdkStackStatic extends Stack {
     });
 
     new CfnOutput(this, 'DistributionDomainNameOuput', {
-      value: `${projectId}.${domainName}`,
+      value: `${deployId}.${domainName}`,
     });
 
     new CfnOutput(this, 'BucketDomainNameOuput', {
-      value: `${projectId}-preview.${domainName}`,
+      value: `${deployId}-preview.${domainName}`,
     });
 
     new StringParameter(this, 'DistributionDomainName', {
-      parameterName: `/yippiecloud/${projectId}/PRODUCTION_URL`,
-      stringValue: `${projectId}.${domainName}`,
+      parameterName: `/yippiecloud/${deployId}/PRODUCTION_URL`,
+      stringValue: `${deployId}.${domainName}`,
     });
 
     new StringParameter(this, 'BucketDomainName', {
-      parameterName: `/yippiecloud/${projectId}/PREVIEW_URL`,
-      stringValue: `${projectId}-preview.${domainName}`,
+      parameterName: `/yippiecloud/${deployId}/PREVIEW_URL`,
+      stringValue: `${deployId}-preview.${domainName}`,
     });
   }
 }
