@@ -18,12 +18,14 @@ const zipFileName = `${namespace}.zip`;
 main();
 
 async function main() {
+  console.log(`Zip folder example/website.`);
   const zip = new AdmZip();
   zip.addLocalFolder('example/website');
   zip.addLocalFile('example/yippie.json');
   zip.writeZip(join(tmpdir(), zipFileName));
 
   try {
+    console.log(`Upload zip to ${bucketName}/${zipFileName}.`);
     const s3 = new S3({});
     await s3.putObject({ Bucket: bucketName, Key: zipFileName, Body: zip.toBuffer() });
   } catch (error) {
@@ -49,6 +51,8 @@ async function main() {
     env: { account: awsAccount, region: awsRegion },
   });
 
-  console.log('Successful deplyoed.');
+  console.log(`Deploying...`);
+  app.synth();
+
   process.exit(0);
 }
