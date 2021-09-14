@@ -2,7 +2,7 @@
   "name": "@yippiecloud/cdk-stack-static",
   "version": "1.2.0",
   "bin": {
-    "cdk-stack-static": "bin/deploy.js"
+    "cdk-stack-static": "bin/app.js"
   },
   "main": "lib/cdk-stack-static.js",
   "scripts": {
@@ -20,12 +20,10 @@
     "@types/dotenv": "8.2.0",
     "@types/jest": "27.0.1",
     "@types/node": "16.9.1",
-    "aws-cdk": "1.122.0",
-    "degit": "2.8.4",
-    "jest": "27.1.1",
+    "jest": "27.2.0",
     "ts-jest": "27.0.5",
     "ts-node": "10.2.1",
-    "typescript": "4.4.2",
+    "typescript": "4.4.3",
     "npm-check-updates": "11.8.5"
   },
   "dependencies": {
@@ -37,10 +35,12 @@
     "@aws-cdk/aws-route53": "1.122.0",
     "@aws-cdk/aws-certificatemanager": "1.122.0",
     "@aws-cdk/aws-ssm": "1.122.0",
-    "@aws-sdk/client-s3": "3.30.0",
-    "adm-zip": "0.5.5",
+    "@aws-sdk/client-s3": "3.31.0",
+    "adm-zip": "0.5.6",
     "command-line-args": "5.2.0",
     "command-line-usage": "6.1.1",
-    "dotenv": "10.0.0"
+    "dotenv": "10.0.0",
+    "aws-cdk": "1.122.0",
+    "degit": "2.8.4"
   }
 }
