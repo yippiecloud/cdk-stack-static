@@ -10,6 +10,8 @@
     "watch": "tsc -w",
     "test": "jest",
     "example": "degit --force yippiecloud/template-website example && npm install --prefix example",
+    "deploy": "node bin/app",
+    "destroy": "node bin/app destroy",
     "upgrade": "npm-check-updates -u"
   },
   "devDependencies": {
