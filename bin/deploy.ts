@@ -53,7 +53,7 @@ const {
 } = parsed;
 const timestamp = Date.now();
 const zipFileName = `${namespace}-${timestamp}.zip`;
-const stackName = 'CdkStackStatic';
+const stackName = `${namespace}-StackStatic`;
 
 switch (options.command) {
   case 'destroy':
@@ -145,6 +145,6 @@ async function destroy() {
     process.exit(1);
   }
 
-  console.log(`Destroyment of ${stackArtifact.stackName} done.`);
+  console.log(`Stack ${stackArtifact.stackName} destroyed.`);
   process.exit(0);
 }
