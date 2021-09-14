@@ -1,32 +1,78 @@
 #!/usr/bin/env node
 import { S3 } from '@aws-sdk/client-s3';
 import AdmZip from 'adm-zip';
-import { App } from '@aws-cdk/core';
+import { App, Tags } from '@aws-cdk/core';
 import { CdkStackStatic } from '../lib/cdk-stack-static';
 import { tmpdir } from 'os';
 import { join } from 'path';
+import commandLineArgs from 'command-line-args';
+import commandLineUsage from 'command-line-usage';
+import { config } from 'dotenv';
+import { SdkProvider } from 'aws-cdk/lib/api/aws-auth';
+import { CloudFormationDeployments } from 'aws-cdk/lib/api/cloudformation-deployments';
+import { StackActivityProgress } from 'aws-cdk/lib/api/util/cloudformation/stack-activity-monitor';
 
-const namespace = process.env.CDK_NAMESPACE!;
-const domainName = process.env.CDK_DOMAINNAME!;
-const certificateArn = process.env.CDK_CERTIFICATEARN!;
-const hostedZoneId = process.env.CDK_HOSTEDZONEID!;
-const awsRegion = process.env.CDK_AWSREGION!;
-const awsAccount = process.env.CDK_AWSACCOUNT!;
-const bucketName = process.env.CDK_BUCKETNAME!;
-const zipFileName = `${namespace}.zip`;
+const optionDefinitions = [
+  {
+    name: 'command',
+    alias: 'd',
+    type: String,
+    defaultOption: true,
+    description: 'Command to execute.',
+  },
+  {
+    name: 'folder',
+    alias: 'f',
+    type: String,
+    description: 'Folder to deploy.',
+  },
+  { name: 'help', alias: 'h', type: Boolean, description: 'Display this usage guide.' },
+  { name: 'verbose', alias: 'v', type: Boolean, description: 'Enable verbose outputs.' },
+];
+const options = commandLineArgs(optionDefinitions);
 
-main();
+if (options.help) {
+  const usage = commandLineUsage([
+    { header: 'Usage', content: 'cdk-stack-static <foldername>' },
+    { header: 'Options', optionList: optionDefinitions },
+    { content: '' },
+  ]);
+  console.log(usage);
+}
 
-async function main() {
-  console.log(`Zip folder example/website.`);
+const { folder = 'example/website', verbose = false } = commandLineArgs(optionDefinitions);
+const { parsed } = config({ debug: verbose }) as any;
+const {
+  CDK_NAMESPACE: namespace,
+  CDK_DOMAINNAME: domainName,
+  CDK_CERTIFICATEARN: certificateArn,
+  CDK_HOSTEDZONEID: hostedZoneId,
+  CDK_AWSREGION: awsRegion,
+  CDK_AWSACCOUNT: awsAccount,
+  CDK_BUCKETNAME: bucketName,
+} = parsed;
+const timestamp = Date.now();
+const zipFileName = `${namespace}-${timestamp}.zip`;
+const stackName = 'CdkStackStatic';
+
+switch (options.command) {
+  case 'destroy':
+    destroy();
+    break;
+  default:
+    deploy();
+    break;
+}
+
+async function deploy() {
+  console.log(`Zip folder ${folder}.`);
   const zip = new AdmZip();
-  zip.addLocalFolder('example/website');
-  zip.addLocalFile('example/yippie.json');
+  zip.addLocalFolder(folder);
   zip.writeZip(join(tmpdir(), zipFileName));
 
   try {
     console.log(`Upload zip to ${bucketName}/${zipFileName}.`);
-    const s3 = new S3({});
+    const s3 = new S3({ region: awsRegion });
     await s3.putObject({ Bucket: bucketName, Key: zipFileName, Body: zip.toBuffer() });
   } catch (error) {
     console.error(error);
@@ -41,8 +87,9 @@ async function main() {
       },
     },
   });
+  Tags.of(app).add('namespace', namespace);
 
-  new CdkStackStatic(app, 'CdkStackStatic', {
+  const stack = new CdkStackStatic(app, stackName, {
     id: namespace,
     bucketName,
     zipFileName,
@@ -51,8 +98,53 @@ async function main() {
     env: { account: awsAccount, region: awsRegion },
   });
 
-  console.log(`Deploying...`);
-  app.synth();
+  const stackArtifact = app.synth().getStackByName(stack.stackName);
+  const sdkProvider = await SdkProvider.withAwsCliCompatibleDefaults({});
+  const cloudFormation = new CloudFormationDeployments({ sdkProvider });
 
+  try {
+    console.log(`Deploying of ${stackArtifact.stackName}...`);
+    await cloudFormation.deployStack({
+      stack: stackArtifact,
+
+      progress: StackActivityProgress.EVENTS,
+      hotswap: true,
+      tags: [{ Key: 'namespace', Value: namespace }],
+    });
+  } catch (error) {
+    console.error(error);
+    process.exit(1);
+  }
+
+  console.log(`Deployment of ${stackArtifact.stackName} done.`);
+  process.exit(0);
+}
+
+async function destroy() {
+  const app = new App();
+  Tags.of(app).add('namespace', namespace);
+
+  const stack = new CdkStackStatic(app, stackName, {
+    id: namespace,
+    bucketName,
+    zipFileName,
+    domainName,
+    certificateArn,
+    env: { account: awsAccount, region: awsRegion },
+  });
+
+  const stackArtifact = app.synth().getStackByName(stack.stackName);
+  const sdkProvider = await SdkProvider.withAwsCliCompatibleDefaults({});
+  const cloudFormation = new CloudFormationDeployments({ sdkProvider });
+
+  try {
+    console.log(`Destoying of ${stackArtifact.stackName} ...`);
+    await cloudFormation.destroyStack({ stack: stackArtifact });
+  } catch (error) {
+    console.error(error);
+    process.exit(1);
+  }
+
+  console.log(`Destroyment of ${stackArtifact.stackName} done.`);
   process.exit(0);
 }

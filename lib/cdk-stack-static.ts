@@ -92,7 +92,6 @@ export class CdkStackStatic extends Stack {
       destinationBucket: destinationBucket,
       sources: [Source.bucket(sourceBucket, zipFileName)],
       retainOnDelete: false,
-
       prune: true,
       distribution,
       distributionPaths: ['/*'],
